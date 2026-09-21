@@ -9,7 +9,7 @@ services:
   # server and workers wait for that success via depends_on, so the schema
   # is current before the application starts.
   migrate:
-    image: ghcr.io/genario-ru/backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
+    image: ghcr.io/genario-ru/genario-backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
     pull_policy: always
     command: pnpm run db:migrate
     restart: "no"
@@ -20,7 +20,7 @@ services:
       - POSTGRES_URL=${POSTGRES_URL}
 
   server:
-    image: ghcr.io/genario-ru/backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
+    image: ghcr.io/genario-ru/genario-backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
     pull_policy: always
     command: pnpm run start
     # No host port: production and stage share one server, and Traefik
@@ -88,7 +88,7 @@ services:
       - GLITCHTIP_DSN=${GLITCHTIP_DSN}
 
   workers:
-    image: ghcr.io/genario-ru/backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
+    image: ghcr.io/genario-ru/genario-backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
     pull_policy: always
     command: pnpm run start:workers
     restart: unless-stopped
