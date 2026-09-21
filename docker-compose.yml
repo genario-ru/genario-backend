@@ -13,6 +13,8 @@ services:
     pull_policy: always
     command: pnpm run db:migrate
     restart: "no"
+    networks:
+      - dokploy-network
     environment:
       - NODE_ENV=${NODE_ENV}
       - POSTGRES_URL=${POSTGRES_URL}
@@ -21,9 +23,21 @@ services:
     image: ghcr.io/genario-ru/backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
     pull_policy: always
     command: pnpm run start
-    ports:
-      - "${HTTP_PORT:-3000}:3000"
+    # Порт на хост не публикуется: prod и stage живут на одном сервере, а Traefik
+    # (Dokploy) ходит в контейнер по dokploy-network на порт 3000.
+    expose:
+      - "3000"
     restart: unless-stopped
+    networks:
+      - dokploy-network
+    # Метки для агента глобального мониторинга (ilialksv-monitoring/agent):
+    # он находит контейнер и скрейпит /metrics по внутренней сети.
+    labels:
+      monitoring.scrape: "true"
+      monitoring.port: "3000"
+      monitoring.job: backend
+      monitoring.project: genario
+      monitoring.env: ${DEPLOY_ENVIRONMENT}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -78,6 +92,8 @@ services:
     pull_policy: always
     command: pnpm run start:workers
     restart: unless-stopped
+    networks:
+      - dokploy-network
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -121,3 +137,40 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - SMTP_FROM=${SMTP_FROM}
       - GLITCHTIP_DSN=${GLITCHTIP_DSN}
+
+  # Экспортеры БД текущего окружения. Наружу ничего не публикуют —
+  # метрики забирает агент мониторинга.
+  # POSTGRES_EXPORTER_DATA_SOURCE_NAME задаётся отдельно от POSTGRES_URL:
+  # у строки Dokploy часто уже есть query, и суффикс ?sslmode=disable её ломает.
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    restart: unless-stopped
+    environment:
+      - DATA_SOURCE_NAME=${POSTGRES_EXPORTER_DATA_SOURCE_NAME:?POSTGRES_EXPORTER_DATA_SOURCE_NAME is required (set it in the Dokploy app environment)}
+    networks:
+      - dokploy-network
+    labels:
+      monitoring.scrape: "true"
+      monitoring.port: "9187"
+      monitoring.job: postgres
+      monitoring.project: genario
+      monitoring.env: ${DEPLOY_ENVIRONMENT}
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.67.0
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=${REDIS_URL}
+    networks:
+      - dokploy-network
+    labels:
+      monitoring.scrape: "true"
+      monitoring.port: "9121"
+      monitoring.job: redis
+      monitoring.project: genario
+      monitoring.env: ${DEPLOY_ENVIRONMENT}
+
+networks:
+  # Общая сеть Dokploy: в ней Traefik, базы данных Dokploy и агент мониторинга.
+  dokploy-network:
+    external: true

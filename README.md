@@ -49,7 +49,7 @@ flowchart LR
   WK --> SK["SocialKit video API"]
   API --> YK["YooKassa"]
   YK -->|webhook| API
-  VM["VictoriaMetrics"] -->|"scrape /metrics"| API
+  AG["Monitoring agent (vmagent)"] -->|"scrape /metrics"| API
   API --> GT["GlitchTip"]
   WK --> GT
 ```
@@ -195,7 +195,8 @@ catalogues.
 **Operational safety**
 - `/metrics` and the Bull Board queue UI are restricted by IP allowlist, so internal
   operational surfaces are unreachable from the public internet even though they share the
-  public domain.
+  public domain. `/metrics` is only read from inside the Docker network by the monitoring
+  agent, and the API publishes no host port — all traffic comes through the reverse proxy.
 - A payments kill switch and a sign-up kill switch can disable money movement and
   registration through environment configuration alone, without a code change or deploy.
 - All configuration is validated at boot with a typed env schema; the process refuses to
@@ -213,8 +214,11 @@ catalogues.
 
 The service exposes Prometheus metrics — `genario_http_requests_total`,
 `genario_http_request_duration_seconds` and `genario_http_requests_in_flight`, labelled by
-route and status class — which the [monitoring stack](https://github.com/genario-ru/monitoring)
-scrapes for dashboards and alerting on error rate and p95 latency. Unhandled errors from
+route and status class. A monitoring agent on the same server discovers the API and the
+PostgreSQL/Redis exporters (shipped in `docker-compose.yml`) by `monitoring.*` container
+labels and pushes their metrics to the global
+[monitoring stack](https://github.com/ilialksv/ilialksv-monitoring) for dashboards and
+alerting on error rate and p95 latency. Unhandled errors from
 both the API and the workers are reported to a self-hosted GlitchTip with release tagging,
 every request carries a request ID, and Bull Board gives direct visibility into queue
 depth, retries and failed jobs.
