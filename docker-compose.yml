@@ -1,13 +1,13 @@
-# Переменные ${DEPLOY_ENVIRONMENT}, ${IMAGE_TAG} и все секреты ниже
-# подставляются Dokploy из настроек Environment приложения в момент
-# `docker compose up` (это НЕ переменные сборки и НЕ значения из GitHub Actions).
-# Каждое окружение (stage / production) задает свой набор в своем приложении Dokploy.
-# DEPLOY_ENVIRONMENT и IMAGE_TAG указаны через ${VAR:?...}, поэтому при их
-# отсутствии compose упадет с явной ошибкой, а не подтянет чужой образ по дефолту.
+# ${DEPLOY_ENVIRONMENT}, ${IMAGE_TAG}, and the secrets below are injected by
+# Dokploy from the application Environment when `docker compose up` runs.
+# They are not build args and not GitHub Actions values.
+# Each environment (stage / production) sets its own values on its own Dokploy app.
+# DEPLOY_ENVIRONMENT and IMAGE_TAG use ${VAR:?...}, so a missing value fails
+# the compose file instead of pulling another environment's image by default.
 services:
-  # One-shot сервис: один раз применяет миграции и завершается.
-  # server и workers ждут его успешного завершения через depends_on, поэтому
-  # схема БД всегда приведена в актуальное состояние до старта приложения.
+  # One-shot service: applies migrations once and exits.
+  # server and workers wait for that success via depends_on, so the schema
+  # is current before the application starts.
   migrate:
     image: ghcr.io/genario-ru/backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
     pull_policy: always
@@ -23,15 +23,15 @@ services:
     image: ghcr.io/genario-ru/backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
     pull_policy: always
     command: pnpm run start
-    # Порт на хост не публикуется: prod и stage живут на одном сервере, а Traefik
-    # (Dokploy) ходит в контейнер по dokploy-network на порт 3000.
+    # No host port: production and stage share one server, and Traefik
+    # (Dokploy) reaches the container on dokploy-network port 3000.
     expose:
       - "3000"
     restart: unless-stopped
     networks:
       - dokploy-network
-    # Метки для агента глобального мониторинга (ilialksv-monitoring/agent):
-    # он находит контейнер и скрейпит /metrics по внутренней сети.
+    # Labels for the shared monitoring agent (ilialksv-monitoring/agent).
+    # It finds this container and scrapes /metrics over the internal network.
     labels:
       monitoring.scrape: "true"
       monitoring.port: "3000"
@@ -138,10 +138,10 @@ services:
       - SMTP_FROM=${SMTP_FROM}
       - GLITCHTIP_DSN=${GLITCHTIP_DSN}
 
-  # Экспортеры БД текущего окружения. Наружу ничего не публикуют —
-  # метрики забирает агент мониторинга.
-  # POSTGRES_EXPORTER_DATA_SOURCE_NAME задаётся отдельно от POSTGRES_URL:
-  # у строки Dokploy часто уже есть query, и суффикс ?sslmode=disable её ломает.
+  # Database exporters for this environment. They publish nothing;
+  # the monitoring agent scrapes them.
+  # POSTGRES_EXPORTER_DATA_SOURCE_NAME is separate from POSTGRES_URL:
+  # a Dokploy URL often already has a query string, and appending ?sslmode=disable breaks it.
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.1
     restart: unless-stopped
@@ -171,6 +171,6 @@ services:
       monitoring.env: ${DEPLOY_ENVIRONMENT}
 
 networks:
-  # Общая сеть Dokploy: в ней Traefik, базы данных Dokploy и агент мониторинга.
+  # Shared Dokploy network: Traefik, Dokploy databases, and the monitoring agent.
   dokploy-network:
     external: true
