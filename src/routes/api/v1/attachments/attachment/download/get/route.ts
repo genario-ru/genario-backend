@@ -4,6 +4,7 @@ import { validator } from "hono-openapi";
 import { db } from "@/db";
 import { getAttachmentDownloadParamsSchema } from "@/domains/attachments/schemas/handlers/get-attachment-download/params";
 import { s3 } from "@/lib/s3/client";
+import { createS3ObjectKey } from "@/lib/s3/utils/create-s3-object-key";
 import { openAPIResponseMiddleware } from "@/middleware/openapi-response-middleware";
 import { rateLimitMiddleware } from "@/middleware/rate-limit-middleware";
 import { sessionMiddleware } from "@/middleware/session-middleware";
@@ -69,7 +70,7 @@ getAttachmentDownloadRoute.get(
       const s3Object = await s3.send(
         new GetObjectCommand({
           Bucket: foundAttachment.bucketName,
-          Key: foundAttachment.key,
+          Key: createS3ObjectKey({ key: foundAttachment.key }),
         }),
       );
 

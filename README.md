@@ -16,17 +16,17 @@ and BullMQ, running as two processes — an HTTP API and a worker fleet.
 
 ## What the service is responsible for
 
-| Area | Responsibility |
-| --- | --- |
-| **Creative profiles** | Import a YouTube/RuTube channel or accept a manual description, enrich its videos through an external video API, and derive a reusable profile (positioning, audience, tone, references) |
-| **Idea generation** | Produce lists of video ideas grounded in a profile, template, tone and target platform |
-| **Script generation** | Build chapters, then scenes within chapters — timecodes, voice-over, visual and sound directions — with full version history |
-| **Scene previews** | Generate still images that illustrate individual scenes |
-| **Publication metadata** | Write separate titles, descriptions and tags for each target platform |
-| **Exports** | Render scripts and idea lists to DOCX and PDF, stored in S3 and delivered through pre-signed URLs |
-| **Billing** | Tariffs, subscriptions, recurring charges, saved payment methods, refunds and payment webhooks via YooKassa |
-| **Credits** | Per-feature credit metering with expiring credit batches and a usage ledger |
-| **Platform** | Passwordless auth, transactional email, referrals, onboarding, legal documents, alerts, archive and search |
+| Area                     | Responsibility                                                                                                                                                                           |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Creative profiles**    | Import a YouTube/RuTube channel or accept a manual description, enrich its videos through an external video API, and derive a reusable profile (positioning, audience, tone, references) |
+| **Idea generation**      | Produce lists of video ideas grounded in a profile, template, tone and target platform                                                                                                   |
+| **Script generation**    | Build chapters, then scenes within chapters — timecodes, voice-over, visual and sound directions — with full version history                                                             |
+| **Scene previews**       | Generate still images that illustrate individual scenes                                                                                                                                  |
+| **Publication metadata** | Write separate titles, descriptions and tags for each target platform                                                                                                                    |
+| **Exports**              | Render scripts and idea lists to DOCX and PDF, stored in S3 and delivered through pre-signed URLs                                                                                        |
+| **Billing**              | Tariffs, subscriptions, recurring charges, saved payment methods, refunds and payment webhooks via YooKassa                                                                              |
+| **Credits**              | Per-feature credit metering with expiring credit batches and a usage ledger                                                                                                              |
+| **Platform**             | Passwordless auth, transactional email, referrals, onboarding, legal documents, alerts, archive and search                                                                               |
 
 Twenty-six business domains live in `src/domains/**`; each owns its Zod schemas, services
 and helpers.
@@ -54,10 +54,11 @@ flowchart LR
   WK --> GT
 ```
 
-Three runtime units ship together:
+Four runtime units ship together:
 
-- **`migrate`** — a one-shot process that applies Drizzle migrations programmatically at
-  deploy time. The API and workers refuse to start until it succeeds.
+- **`migrate`** and **`seed`** — one-shot processes at deploy time: the first applies
+  Drizzle migrations programmatically, the second upserts the reference data from
+  `data/*.json`. The API and workers refuse to start until both succeed.
 - **`server`** — the Hono HTTP API: request validation, authorization, persistence, job
   enqueueing, OpenAPI documentation and metrics.
 - **`workers`** — BullMQ consumers that do everything slow: AI generation, media
@@ -71,23 +72,23 @@ queue, and the two processes can be scaled independently.
 
 ## Tech stack
 
-| Area | Choice |
-| --- | --- |
-| Language / runtime | TypeScript (ESM, strict), Node.js |
-| HTTP | Hono 4 with `hono-openapi` |
-| Validation | Zod 4 on every request input and every response |
-| API docs | OpenAPI document at `/api/open-api`, Scalar reference UI at `/api/docs` |
-| Database | PostgreSQL with Drizzle ORM; versioned SQL migrations |
-| Queues | BullMQ on Redis, with a Bull Board operations UI |
-| Auth | Better Auth — email OTP, database sessions, admin plugin, Redis secondary storage |
-| AI | OpenAI-compatible provider for structured output and image generation; prompts as Markdown templates with typed builders |
-| External APIs | YooKassa (payments) and SocialKit (video data), clients generated by Kubb from their OpenAPI specs |
-| Storage | S3-compatible object storage with pre-signed URLs |
-| Documents | `docx` and `pdf-lib` for exports, `sharp` for image processing |
-| Email | Nodemailer with React Email templates |
-| Observability | `prom-client` metrics, Sentry SDK reporting to a self-hosted GlitchTip, request IDs |
-| Tests | Vitest (unit and integration suites) |
-| Build | `tsup` bundle, multi-stage Docker image |
+| Area               | Choice                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Language / runtime | TypeScript (ESM, strict), Node.js                                                                                        |
+| HTTP               | Hono 4 with `hono-openapi`                                                                                               |
+| Validation         | Zod 4 on every request input and every response                                                                          |
+| API docs           | OpenAPI document at `/api/open-api`, Scalar reference UI at `/api/docs`                                                  |
+| Database           | PostgreSQL with Drizzle ORM; versioned SQL migrations                                                                    |
+| Queues             | BullMQ on Redis, with a Bull Board operations UI                                                                         |
+| Auth               | Better Auth — email OTP, database sessions, admin plugin, Redis secondary storage                                        |
+| AI                 | OpenAI-compatible provider for structured output and image generation; prompts as Markdown templates with typed builders |
+| External APIs      | YooKassa (payments) and SocialKit (video data), clients generated by Kubb from their OpenAPI specs                       |
+| Storage            | S3-compatible object storage with pre-signed URLs                                                                        |
+| Documents          | `docx` and `pdf-lib` for exports, `sharp` for image processing                                                           |
+| Email              | Nodemailer with React Email templates                                                                                    |
+| Observability      | `prom-client` metrics, Sentry SDK reporting to a self-hosted GlitchTip, request IDs                                      |
+| Tests              | Vitest (unit and integration suites)                                                                                     |
+| Build              | `tsup` bundle, multi-stage Docker image                                                                                  |
 
 ---
 
@@ -121,13 +122,13 @@ out as well as on the way in.
 Eighteen queues back the product's long-running work, each a `queue.ts` / `worker.ts` pair
 under `src/mq/**`:
 
-| Group | Queues |
-| --- | --- |
-| Script generation | chapters, scenes, chapter scenes, scene previews, metadata, metadata regeneration |
-| Idea generation | idea-list generation, idea-list export |
-| Profile import | channel video import, video attachment enrichment, video processing, video optimization, profiles from channels |
-| Delivery | scenario version export, mail send |
-| Scheduled billing | subscription charges, expiring credit-batch termination, upcoming-charge newsletter |
+| Group             | Queues                                                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| Script generation | chapters, scenes, chapter scenes, scene previews, metadata, metadata regeneration                               |
+| Idea generation   | idea-list generation, idea-list export                                                                          |
+| Profile import    | channel video import, video attachment enrichment, video processing, video optimization, profiles from channels |
+| Delivery          | scenario version export, mail send                                                                              |
+| Scheduled billing | subscription charges, expiring credit-batch termination, upcoming-charge newsletter                             |
 
 Generation is deliberately decomposed rather than done in one prompt: chapters first, then
 scenes per chapter, then previews and metadata. Each stage is independently retryable,
@@ -156,14 +157,14 @@ being scraped out of free-form text.
 
 Around sixty-five tables live in `src/db/schemas/**`, grouped by concern:
 
-| Group | Contents |
-| --- | --- |
-| `primary` | Users, profiles, channels, scenarios, chapters, scenes, scene components, versions, metadata, ideas, idea lists, templates, attachments, exports, reference data |
-| `billing` | Tariffs, discounts, subscriptions, payments, payment methods, refunds, credit packages, credit batches, credit usage |
-| `auth` | Sessions, accounts, verification records |
-| `linking` | Explicit join tables for many-to-many relations |
-| `logs` | Email and generation logs |
-| `jobs`, `referral`, `secondary` | Import jobs, referral codes/invites/rewards, alerts and notifications |
+| Group                           | Contents                                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `primary`                       | Users, profiles, channels, scenarios, chapters, scenes, scene components, versions, metadata, ideas, idea lists, templates, attachments, exports, reference data |
+| `billing`                       | Tariffs, discounts, subscriptions, payments, payment methods, refunds, credit packages, credit batches, credit usage                                             |
+| `auth`                          | Sessions, accounts, verification records                                                                                                                         |
+| `linking`                       | Explicit join tables for many-to-many relations                                                                                                                  |
+| `logs`                          | Email and generation logs                                                                                                                                        |
+| `jobs`, `referral`, `secondary` | Import jobs, referral codes/invites/rewards, alerts and notifications                                                                                            |
 
 The schema is the single source of truth: migrations are generated from it and committed
 alongside the change, and reference data ships as idempotent JSON seeds upserted by
@@ -175,6 +176,7 @@ catalogues.
 ## Security measures
 
 **Authentication and sessions**
+
 - Passwordless email OTP sign-in; the service never stores or verifies a password.
 - One-time codes are held **encrypted** at rest.
 - Sessions are persisted in PostgreSQL with Redis-backed secondary storage, delivered as
@@ -183,6 +185,7 @@ catalogues.
   time-limited impersonation sessions.
 
 **Request-level controls**
+
 - Redis-backed rate limiting per endpoint, keyed by client IP and — once authenticated —
   by user; authentication endpoints are limited to three attempts per minute.
 - Origin validation on the whole `/api/*` surface against a trusted-origin allowlist, with
@@ -193,6 +196,7 @@ catalogues.
 - Subscription and admin gates enforced as middleware, not inside handlers.
 
 **Operational safety**
+
 - `/metrics` and the Bull Board queue UI are restricted by IP allowlist, so internal
   operational surfaces are unreachable from the public internet even though they share the
   public domain. `/metrics` is only read from inside the Docker network by the monitoring
@@ -231,26 +235,26 @@ Pushes to `stage` and `prod` build a multi-stage Docker image, publish it to Git
 Container Registry and trigger a Dokploy deployment. The runtime image is pruned to
 production dependencies, so migrations run through a compiled programmatic runner rather
 than a CLI that is no longer present. Compose orders the rollout: `migrate` completes
-first, then `server` and `workers` start against the migrated schema.
+first, then `seed` loads the reference data, then `server` and `workers` start.
 
 ---
 
 ## Repository map
 
-| Path | Contents |
-| --- | --- |
-| `src/entrypoints/` | Process entrypoints: HTTP server, workers, migrations |
-| `src/routes/` | Hono route modules, colocated per endpoint |
-| `src/domains/` | Business domains: schemas, services, types, utilities |
-| `src/db/` | Drizzle schemas, relations, migrations, seeds |
-| `src/mq/` | BullMQ queues and workers |
-| `src/ai/` | Prompt templates, builders, types, providers |
-| `src/lib/` | Integrations: S3, Redis, YooKassa, SocialKit, mail, PDF, DOCX, images, Sentry |
-| `src/middleware/` | Session, rate limiting, subscription, admin, CORS, origin validation, IP allowlist, metrics, kill switches |
-| `src/shared/` | Cross-domain primitives, error and response schemas, server utilities |
-| `src/codegen/` | Generated external API clients — never edited by hand |
-| `tests/` | Vitest unit and integration suites |
-| `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.agents/` | Working agreements and repeatable workflows for AI coding tools |
+| Path                                             | Contents                                                                                                   |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `src/entrypoints/`                               | Process entrypoints: HTTP server, workers, migrations, seed                                                |
+| `src/routes/`                                    | Hono route modules, colocated per endpoint                                                                 |
+| `src/domains/`                                   | Business domains: schemas, services, types, utilities                                                      |
+| `src/db/`                                        | Drizzle schemas, relations, migrations, seeds                                                              |
+| `src/mq/`                                        | BullMQ queues and workers                                                                                  |
+| `src/ai/`                                        | Prompt templates, builders, types, providers                                                               |
+| `src/lib/`                                       | Integrations: S3, Redis, YooKassa, SocialKit, mail, PDF, DOCX, images, Sentry                              |
+| `src/middleware/`                                | Session, rate limiting, subscription, admin, CORS, origin validation, IP allowlist, metrics, kill switches |
+| `src/shared/`                                    | Cross-domain primitives, error and response schemas, server utilities                                      |
+| `src/codegen/`                                   | Generated external API clients — never edited by hand                                                      |
+| `tests/`                                         | Vitest unit and integration suites                                                                         |
+| `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.agents/` | Working agreements and repeatable workflows for AI coding tools                                            |
 
 ---
 

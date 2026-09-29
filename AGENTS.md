@@ -91,7 +91,7 @@ update the documentation in the same change.
 
 | Path              | Purpose                                                       |
 | ----------------- | ------------------------------------------------------------- |
-| `src/entrypoints` | Process entrypoints: HTTP server and workers                  |
+| `src/entrypoints` | Process entrypoints: HTTP server, workers, migrations, seed   |
 | `src/routes`      | Hono route modules and route indexes                          |
 | `src/domains`     | Domain schemas, services, constants, and utilities            |
 | `src/db`          | Drizzle client, schema, relations, migrations, DB utilities   |
@@ -194,8 +194,8 @@ do the same.
   owner explicitly asks for that exact command in the current task.
 - Migration **application** happens at deploy (`pnpm db:migrate` via
   `dist/migrate.js`); agents must not apply migrations to a database.
-- Seed execution remains a separate manual/local step unless the owner
-  explicitly asks for `pnpm db:seed` in the current task.
+- Seed **application** happens at deploy too (`pnpm db:seed` via
+  `dist/seed.js`); agents must not seed a database.
 - When adding/changing tables, add required indexes, foreign keys, and Drizzle
   `relations(...)` immediately. Do not leave relation/index work as a follow-up.
 - Use native Drizzle ORM syntax for references, indexes, unique indexes, and
@@ -213,17 +213,20 @@ do the same.
   If you change the migrations output path, update the Dockerfile `COPY` and the
   `migrationsFolder` in `src/entrypoints/migrate.ts`.
 - A one-shot `migrate` service in `docker-compose.yml` runs migrations on deploy;
-  `server`/`workers` depend on its successful completion.
+  the `seed` service depends on its successful completion.
 
 ### Default data (seed)
 
 - Reference/default data lives in `data/*.json` and is loaded by the seed runner
-  in `src/db/seed/**` (config + runner), invoked through
-  `src/scripts/seed-database.ts` (`pnpm db:seed`, local). The seed is not part of
-  the production build and never runs on the server.
+  in `src/db/seed/**` (config + runner), invoked through `src/entrypoints/seed.ts`
+  (`pnpm db:seed` → `dist/seed.js`). The JSON is bundled into `dist/seed.js`, so
+  the runtime image needs no data files.
+- It runs only at deploy: a one-shot `seed` service in `docker-compose.yml`
+  runs after `migrate`, and `server`/`workers` depend on its successful
+  completion. There is no local seed script: the local database is filled by the
+  same deploy flow or not at all.
 - Seeding is idempotent: upsert by primary key `id` with `onConflictDoUpdate`
-  (repo is the source of truth). It is a separate manual step, not part of the
-  automatic deploy migration.
+  (repo is the source of truth).
 - When adding a new default-data table, add a `data/<table>.json` file and a new
   entry in `src/db/seed/config.ts` (respect FK order: referenced tables first).
 
@@ -319,7 +322,7 @@ Database commands:
 ```bash
 pnpm db:generate # generate SQL migration from schema changes (commit output)
 pnpm db:migrate # deploy-stage only — do not run from agent workflow
-pnpm db:seed # local/manual default data — owner-only unless explicitly asked
+pnpm db:seed # deploy-stage only (seed service) — do not run from agent workflow
 pnpm db:studio # local inspection — owner-only unless explicitly asked
 ```
 

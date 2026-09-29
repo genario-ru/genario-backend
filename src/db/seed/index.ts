@@ -5,6 +5,7 @@ import { camelCase } from "es-toolkit";
 import type * as schema from "@/db/schema";
 
 import { seedEntries } from "./config";
+import { resolvePublicS3Urls } from "./resolve-public-s3-urls";
 
 /**
  * JSON-файлы хранят ключи в snake_case (`logo_url`), а `.values()` ожидает
@@ -39,7 +40,9 @@ export async function seedDefaultData(
       }
 
       const columns = getTableColumns(entry.table);
-      const rows = entry.rows.map(toCamelCaseRow);
+      const rows = entry.rows.map((row) =>
+        resolvePublicS3Urls(toCamelCaseRow(row)),
+      );
 
       // Колонки, реально присутствующие в JSON (кроме ключа и created_at),
       // обновляем значением из вставляемой строки (excluded.*).

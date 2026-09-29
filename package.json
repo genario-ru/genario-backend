@@ -18,7 +18,7 @@
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node dist/migrate.js",
-    "db:seed": "tsx src/scripts/seed-database.ts",
+    "db:seed": "node dist/seed.js",
     "api:download:socialkit": "tsx src/scripts/download-socialkit-openapi.ts",
     "api:download:yookassa": "tsx src/scripts/download-yookassa-openapi.ts",
     "api:generate": "kubb generate"

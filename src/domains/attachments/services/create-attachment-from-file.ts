@@ -68,7 +68,7 @@ export async function createAttachmentFromFile({
         userId,
         fileName,
         key: attachmentKey,
-        bucketName: env.S3_BUCKET_NAME,
+        bucketName: env.S3_PRIVATE_BUCKET_NAME,
         mimeType,
       })
       .returning();
@@ -77,7 +77,7 @@ export async function createAttachmentFromFile({
   } catch (error) {
     try {
       await deleteS3Object({
-        bucketName: env.S3_BUCKET_NAME,
+        bucketName: env.S3_PRIVATE_BUCKET_NAME,
         key: attachmentKey,
       });
     } catch (cleanupError) {

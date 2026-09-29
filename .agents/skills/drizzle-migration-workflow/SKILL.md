@@ -27,8 +27,8 @@ or delete old migrations if it breaks migration history order.
 
 ## Default data (seed)
 
-- Reference data lives in `data/*.json`; the seed runner is in `src/db/seed/**` and is invoked via `src/scripts/seed-database.ts` (`pnpm db:seed`, local only — not built into the image, never runs on the server).
-- Idempotent upsert by primary key `id` (`onConflictDoUpdate`, repo is source of truth). Separate manual step, not part of the deploy migration.
+- Reference data lives in `data/*.json`; the seed runner is in `src/db/seed/**` and is invoked via `src/entrypoints/seed.ts` (`pnpm db:seed` → `dist/seed.js`, the JSON is bundled into it). It runs only at deploy, in the one-shot `seed` service of `docker-compose.yml` after `migrate`; there is no local seed script.
+- Idempotent upsert by primary key `id` (`onConflictDoUpdate`, repo is source of truth).
 - New default-data table: add `data/<table>.json` and an entry in `src/db/seed/config.ts` (referenced tables before dependents for FK order).
 
 ## Reference Examples

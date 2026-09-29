@@ -5,9 +5,8 @@
 # DEPLOY_ENVIRONMENT and IMAGE_TAG use ${VAR:?...}, so a missing value fails
 # the compose file instead of pulling another environment's image by default.
 services:
-  # One-shot service: applies migrations once and exits.
-  # server and workers wait for that success via depends_on, so the schema
-  # is current before the application starts.
+  # One-shot service: applies migrations once and exits. seed waits for its
+  # successful completion, so the schema is current before the data lands.
   migrate:
     image: ghcr.io/genario-ru/genario-backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
     pull_policy: always
@@ -18,6 +17,28 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - POSTGRES_URL=${POSTGRES_URL}
+
+  # One-shot service: loads the reference data from data/*.json after migrate
+  # and exits. server and workers wait for its successful completion, so the
+  # application never starts without it. This is the only place the seed runs.
+  seed:
+    image: ghcr.io/genario-ru/genario-backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
+    pull_policy: always
+    command: pnpm run db:seed
+    restart: "no"
+    networks:
+      - dokploy-network
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - POSTGRES_URL=${POSTGRES_URL}
+      # Public file addresses in data/*.json (s3-public://) resolve into
+      # the project's folder of the public bucket.
+      - S3_PUBLIC_BUCKET_BASE_URL=${S3_PUBLIC_BUCKET_BASE_URL}
+      - S3_PUBLIC_BUCKET_NAME=${S3_PUBLIC_BUCKET_NAME}
+      - S3_PUBLIC_KEY_PREFIX=${S3_PUBLIC_KEY_PREFIX}
 
   server:
     image: ghcr.io/genario-ru/genario-backend-${DEPLOY_ENVIRONMENT:?DEPLOY_ENVIRONMENT is required (set it in the Dokploy app environment)}:${IMAGE_TAG:?IMAGE_TAG is required (set it in the Dokploy app environment)}
@@ -39,21 +60,22 @@ services:
       monitoring.project: genario
       monitoring.env: ${DEPLOY_ENVIRONMENT}
     depends_on:
-      migrate:
+      seed:
         condition: service_completed_successfully
     environment:
       - NODE_ENV=${NODE_ENV}
       - POSTGRES_URL=${POSTGRES_URL}
       - REDIS_URL=${REDIS_URL}
-      - S3_BUCKET_BASE_URL=${S3_BUCKET_BASE_URL}
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-      - S3_REGION=${S3_REGION}
-      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
-      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - S3_PRIVATE_BUCKET_BASE_URL=${S3_PRIVATE_BUCKET_BASE_URL}
+      - S3_PRIVATE_BUCKET_NAME=${S3_PRIVATE_BUCKET_NAME}
+      - S3_PRIVATE_REGION=${S3_PRIVATE_REGION}
+      - S3_PRIVATE_ACCESS_KEY=${S3_PRIVATE_ACCESS_KEY}
+      - S3_PRIVATE_SECRET_ACCESS_KEY=${S3_PRIVATE_SECRET_ACCESS_KEY}
+      - S3_PRIVATE_KEY_PREFIX=${S3_PRIVATE_KEY_PREFIX}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL}
       - BETTER_AUTH_FIXED_SIGN_IN_OTPS=${BETTER_AUTH_FIXED_SIGN_IN_OTPS}
-      - DISABLE_SIGN_UP=${DISABLE_SIGN_UP}
+      - BETTER_AUTH_DISABLE_SIGN_UP=${BETTER_AUTH_DISABLE_SIGN_UP}
       - POLZA_AI_BASE_URL=${POLZA_AI_BASE_URL}
       - POLZA_AI_API_KEY=${POLZA_AI_API_KEY}
       - POLZA_AI_STRUCTURED_OUTPUT_MODEL=${POLZA_AI_STRUCTURED_OUTPUT_MODEL}
@@ -95,21 +117,22 @@ services:
     networks:
       - dokploy-network
     depends_on:
-      migrate:
+      seed:
         condition: service_completed_successfully
     environment:
       - NODE_ENV=${NODE_ENV}
       - POSTGRES_URL=${POSTGRES_URL}
       - REDIS_URL=${REDIS_URL}
-      - S3_BUCKET_BASE_URL=${S3_BUCKET_BASE_URL}
-      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-      - S3_REGION=${S3_REGION}
-      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
-      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - S3_PRIVATE_BUCKET_BASE_URL=${S3_PRIVATE_BUCKET_BASE_URL}
+      - S3_PRIVATE_BUCKET_NAME=${S3_PRIVATE_BUCKET_NAME}
+      - S3_PRIVATE_REGION=${S3_PRIVATE_REGION}
+      - S3_PRIVATE_ACCESS_KEY=${S3_PRIVATE_ACCESS_KEY}
+      - S3_PRIVATE_SECRET_ACCESS_KEY=${S3_PRIVATE_SECRET_ACCESS_KEY}
+      - S3_PRIVATE_KEY_PREFIX=${S3_PRIVATE_KEY_PREFIX}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL}
       - BETTER_AUTH_FIXED_SIGN_IN_OTPS=${BETTER_AUTH_FIXED_SIGN_IN_OTPS}
-      - DISABLE_SIGN_UP=${DISABLE_SIGN_UP}
+      - BETTER_AUTH_DISABLE_SIGN_UP=${BETTER_AUTH_DISABLE_SIGN_UP}
       - POLZA_AI_BASE_URL=${POLZA_AI_BASE_URL}
       - POLZA_AI_API_KEY=${POLZA_AI_API_KEY}
       - POLZA_AI_STRUCTURED_OUTPUT_MODEL=${POLZA_AI_STRUCTURED_OUTPUT_MODEL}

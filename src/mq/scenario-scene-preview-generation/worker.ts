@@ -165,7 +165,7 @@ export const scenarioScenePreviewsGenerationWorker =
                   userId: scenario.userId,
                   fileName: `${scenarioScenePreviewId}.webp`,
                   key: s3KeyOriginal,
-                  bucketName: env.S3_BUCKET_NAME,
+                  bucketName: env.S3_PRIVATE_BUCKET_NAME,
                   mimeType: originalMimeType,
                 })
                 .returning(),
@@ -175,7 +175,7 @@ export const scenarioScenePreviewsGenerationWorker =
                   userId: scenario.userId,
                   fileName: `${scenarioScenePreviewId}-compressed.webp`,
                   key: s3KeyCompressed,
-                  bucketName: env.S3_BUCKET_NAME,
+                  bucketName: env.S3_PRIVATE_BUCKET_NAME,
                   mimeType: compressedMimeType,
                 })
                 .returning(),

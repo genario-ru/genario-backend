@@ -12,6 +12,10 @@ COPY tsconfig.json tsup.config.ts drizzle.config.ts auth.ts env.ts ./
 # Копируем исходный код
 COPY src ./src
 
+# Дефолтные данные: tsup вшивает эти JSON в dist/seed.js, поэтому они нужны
+# только при сборке и в рантайм-образ не копируются.
+COPY data ./data
+
 # Устанавливаем зависимости и собираем проект
 RUN pnpm install --frozen-lockfile && \
     pnpm run build && \

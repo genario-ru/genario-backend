@@ -3,6 +3,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { env } from "@/env";
 
 import { s3 } from "../client";
+import { createS3ObjectKey } from "./create-s3-object-key";
 
 type UploadBufferToS3Params = {
   key: string;
@@ -16,8 +17,8 @@ export async function uploadBufferToS3({
   buffer,
 }: UploadBufferToS3Params): Promise<void> {
   const command = new PutObjectCommand({
-    Bucket: env.S3_BUCKET_NAME,
-    Key: key,
+    Bucket: env.S3_PRIVATE_BUCKET_NAME,
+    Key: createS3ObjectKey({ key }),
     Body: buffer,
     ContentType: mimeType,
   });

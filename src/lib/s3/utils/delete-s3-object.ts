@@ -1,6 +1,7 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 import { s3 } from "../client";
+import { createS3ObjectKey } from "./create-s3-object-key";
 
 type DeleteS3ObjectParams = {
   bucketName: string;
@@ -14,7 +15,7 @@ export async function deleteS3Object({
   await s3.send(
     new DeleteObjectCommand({
       Bucket: bucketName,
-      Key: key,
+      Key: createS3ObjectKey({ key }),
     }),
   );
 }

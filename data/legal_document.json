@@ -3,7 +3,7 @@
     "id": "001c6e18-8102-4969-b0db-66100b183964",
     "slug": "refund-policy",
     "title": "Политика возвратов",
-    "url": "https://s3.twcstorage.ru/genario-public-s3-storage/legal/refund-policy.md",
+    "url": "s3-public://legal/refund-policy.md",
     "created_at": "2026-05-17 19:19:21.935+00",
     "updated_at": "2026-05-17 19:19:22.03383+00"
   },
@@ -11,7 +11,7 @@
     "id": "248042ff-8c69-4ae1-9535-91edea37fdc0",
     "slug": "public-offer",
     "title": "Оферта",
-    "url": "https://s3.twcstorage.ru/genario-public-s3-storage/legal/public-offer.md",
+    "url": "s3-public://legal/public-offer.md",
     "created_at": "2026-05-17 19:19:21.938+00",
     "updated_at": "2026-05-17 19:19:22.199569+00"
   },
@@ -19,7 +19,7 @@
     "id": "5a3320f7-a758-44f0-8989-93794760a4f5",
     "slug": "requisites",
     "title": "Реквизиты",
-    "url": "https://s3.twcstorage.ru/genario-public-s3-storage/legal/requisites.md",
+    "url": "s3-public://legal/requisites.md",
     "created_at": "2026-05-17 19:19:21.933+00",
     "updated_at": "2026-05-17 19:19:21.68501+00"
   },
@@ -27,7 +27,7 @@
     "id": "735ef1f5-9e34-4122-8795-7a9542e85b4e",
     "slug": "terms-of-service",
     "title": "Пользовательское соглашение",
-    "url": "https://s3.twcstorage.ru/genario-public-s3-storage/legal/terms-of-service.md",
+    "url": "s3-public://legal/terms-of-service.md",
     "created_at": "2026-05-17 19:19:21.931+00",
     "updated_at": "2026-05-17 19:19:21.894035+00"
   },
@@ -35,7 +35,7 @@
     "id": "879930ca-b36e-47c6-ad42-ae5047ea066b",
     "slug": "privacy-policy",
     "title": "Политика обработки персональных данных",
-    "url": "https://s3.twcstorage.ru/genario-public-s3-storage/legal/privacy-policy.md",
+    "url": "s3-public://legal/privacy-policy.md",
     "created_at": "2026-05-17 19:19:21.94+00",
     "updated_at": "2026-05-17 19:19:22.404565+00"
   },
@@ -43,7 +43,7 @@
     "id": "c0a28bff-68d7-4d43-aa2b-03c66e0e4e95",
     "slug": "cookie-policy",
     "title": "Политика Cookie",
-    "url": "https://s3.twcstorage.ru/genario-public-s3-storage/legal/cookie-policy.md",
+    "url": "s3-public://legal/cookie-policy.md",
     "created_at": "2026-05-17 19:19:21.943+00",
     "updated_at": "2026-05-17 19:19:22.547637+00"
   },
@@ -51,7 +51,7 @@
     "id": "ed0f3e97-2fa6-4416-bab8-e5974cd0fbca",
     "slug": "advertising-consent",
     "title": "Согласие на получение рекламы",
-    "url": "https://s3.twcstorage.ru/genario-public-s3-storage/legal/advertising-consent.md",
+    "url": "s3-public://legal/advertising-consent.md",
     "created_at": "2026-05-17 20:01:37.144+00",
     "updated_at": "2026-05-17 20:01:37.342475+00"
   }

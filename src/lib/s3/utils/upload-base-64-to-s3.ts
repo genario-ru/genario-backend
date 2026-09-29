@@ -4,6 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/env";
 
 import { s3 } from "../client";
+import { createS3ObjectKey } from "./create-s3-object-key";
 
 type UploadBase64ToS3Params = {
   key: string;
@@ -19,8 +20,8 @@ export async function uploadBase64ToS3({
   const buffer = Buffer.from(base64, "base64");
 
   const command = new PutObjectCommand({
-    Bucket: env.S3_BUCKET_NAME,
-    Key: key,
+    Bucket: env.S3_PRIVATE_BUCKET_NAME,
+    Key: createS3ObjectKey({ key }),
     Body: buffer,
     ContentType: mimeType,
   });
