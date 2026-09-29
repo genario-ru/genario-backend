@@ -15,7 +15,6 @@ export const env = createEnv({
     S3_PRIVATE_REGION: z.string().min(1),
     S3_PRIVATE_ACCESS_KEY: z.string().min(1),
     S3_PRIVATE_SECRET_ACCESS_KEY: z.string().min(1),
-    // Папка окружения в общем бакете, например genario/prod.
     S3_PRIVATE_KEY_PREFIX: z.string().regex(/^[^/].*[^/]$/),
     BETTER_AUTH_SECRET: z.string().min(1),
     BETTER_AUTH_URL: z.url(),
